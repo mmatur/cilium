@@ -164,7 +164,10 @@ func dumpIPsecStatus() {
 	if err != nil {
 		Fatalf("Cannot get xfrm state: %s", err)
 	}
-	keys := ipsec.CountUniqueIPsecKeys(xfrmStates)
+	keys, err := ipsec.CountUniqueIPsecKeys(xfrmStates)
+	if err != nil {
+		Fatalf("Cannot count unique IPSec keys: %s", err)
+	}
 	oseq := maxSequenceNumber()
 	interfaces := getDecryptionInterfaces()
 	fmt.Printf("Decryption interface(s): %s\n", strings.Join(interfaces, ", "))

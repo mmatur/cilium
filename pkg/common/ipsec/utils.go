@@ -4,6 +4,8 @@
 package ipsec
 
 import (
+	"fmt"
+
 	"github.com/vishvananda/netlink"
 
 	"github.com/cilium/cilium/pkg/datapath/linux/linux_defaults"
@@ -15,18 +17,24 @@ const (
 	markStateOut = 0xe00
 )
 
-func CountUniqueIPsecKeys(states []netlink.XfrmState) int {
+func CountUniqueIPsecKeys(states []netlink.XfrmState) (int, error) {
 	keys := make(map[string]bool)
 	for _, s := range states {
 		if s.Aead != nil {
 			keys[string(s.Aead.Key)] = true
+			continue
 		}
-		if s.Crypt != nil {
-			keys[string(s.Crypt.Key)] = true
+		if s.Auth == nil && s.Crypt == nil {
+			continue
 		}
+		if (s.Auth != nil && s.Crypt == nil) || (s.Auth == nil && s.Crypt != nil) {
+			return 0, fmt.Errorf("invalid XfrmState found [Auth != nil -> %t] [Crypt != nil -> %t]", s.Auth != nil, s.Crypt != nil)
+		}
+		// if AES-CBC Cipher algorithm enabled both Auth and Crypt keys will be present and used to make a unique key
+		key := fmt.Sprintf("%s:%s", string(s.Auth.Key), string(s.Crypt.Key))
+		keys[key] = true
 	}
-
-	return len(keys)
+	return len(keys), nil
 }
 
 func CountXfrmStatesByDir(states []netlink.XfrmState) (int, int) {
