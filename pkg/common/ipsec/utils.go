@@ -18,10 +18,12 @@ const (
 func CountUniqueIPsecKeys(states []netlink.XfrmState) int {
 	keys := make(map[string]bool)
 	for _, s := range states {
-		if s.Aead == nil {
-			continue
+		if s.Aead != nil {
+			keys[string(s.Aead.Key)] = true
 		}
-		keys[string(s.Aead.Key)] = true
+		if s.Crypt != nil {
+			keys[string(s.Crypt.Key)] = true
+		}
 	}
 
 	return len(keys)
