@@ -20,19 +20,17 @@ const (
 func CountUniqueIPsecKeys(states []netlink.XfrmState) (int, error) {
 	keys := make(map[string]bool)
 	for _, s := range states {
-		if s.Aead != nil {
+		if s.Aead != nil && s.Auth == nil && s.Crypt == nil {
 			keys[string(s.Aead.Key)] = true
 			continue
 		}
-		if s.Auth == nil && s.Crypt == nil {
+		if s.Aead == nil && s.Auth != nil && s.Crypt != nil {
+			// we want to count the number of unique (Auth, Crypt) tuples
+			key := fmt.Sprintf("%s:%s", string(s.Auth.Key), string(s.Crypt.Key))
+			keys[key] = true
 			continue
 		}
-		if (s.Auth != nil && s.Crypt == nil) || (s.Auth == nil && s.Crypt != nil) {
-			return 0, fmt.Errorf("invalid XfrmState found [Auth != nil -> %t] [Crypt != nil -> %t]", s.Auth != nil, s.Crypt != nil)
-		}
-		// if AES-CBC Cipher algorithm enabled both Auth and Crypt keys will be present and used to make a unique key
-		key := fmt.Sprintf("%s:%s", string(s.Auth.Key), string(s.Crypt.Key))
-		keys[key] = true
+		return 0, fmt.Errorf("an unsupported XfrmStateAlgo combination has been found")
 	}
 	return len(keys), nil
 }

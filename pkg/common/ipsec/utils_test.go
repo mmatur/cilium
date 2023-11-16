@@ -97,6 +97,13 @@ func TestCountUniqueIPsecKeys(t *testing.T) {
 	state.Crypt = nil // make it invalid
 	_, err = CountUniqueIPsecKeys(append(xfrmStates, state))
 	require.Error(t, err)
+
+	state = getXfrmState(t, "10.0.0.1", "10.0.0.2", 2, "cbc(aes)", "611d0c8049dd88600ec4f9eded7b1ed540ea607f", 0x12343e00)
+	state.Aead = nil  // make it invalid
+	state.Auth = nil  // make it invalid
+	state.Crypt = nil // make it invalid
+	_, err = CountUniqueIPsecKeys(append(xfrmStates, state))
+	require.Error(t, err)
 }
 
 func TestCountXfrmStatesByDir(t *testing.T) {
