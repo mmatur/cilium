@@ -393,6 +393,8 @@ jobs:
               EXTRA="--secondary-network-iface=eth1"
             fi
 
+            kubectl -n kube-system get pods -l k8s-app=cilium --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}' | xargs -I'{}' kubectl -n kube-system exec  '{}' -c cilium-agent -- cilium metrics list | grep drop_count
+
             ./cilium-cli connectivity test --include-unsafe-tests --collect-sysdump-on-failure \
               --include-conn-disrupt-test \
               --test '${{ env.tests }}' \
@@ -409,7 +411,7 @@ jobs:
         with:
           provision: 'false'
           cmd: |
-            cd /host
+            kubectl -n kube-system get pods -l k8s-app=cilium --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}' | xargs -I'{}' kubectl -n kube-system exec  '{}' -c cilium-agent -- cilium metrics list | grep drop_count
             kubectl get pods --all-namespaces -o wide
             ./cilium-cli status
             mkdir -p cilium-sysdumps
