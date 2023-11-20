@@ -293,13 +293,13 @@ jobs:
 
             mkdir -p cilium-junits
 
-      - name: Wait for images to be available
-        timeout-minutes: 10
-        shell: bash
-        run: |
-          for image in cilium-ci operator-generic-ci hubble-relay-ci ; do
-            until docker manifest inspect quay.io/${{ env.QUAY_ORGANIZATION_DEV }}/$image:${{ steps.vars.outputs.sha }} &> /dev/null; do sleep 45s; done
-          done
+            #      - name: Wait for images to be available
+            #        timeout-minutes: 10
+            #        shell: bash
+            #        run: |
+            #          for image in cilium-ci operator-generic-ci hubble-relay-ci ; do
+            #            until docker manifest inspect quay.io/${{ env.QUAY_ORGANIZATION_DEV }}/$image:${{ steps.vars.outputs.sha }} &> /dev/null; do sleep 45s; done
+            #          done
 
       - name: Install Cilium ${{ env.cilium_stable_version }}
         uses: cilium/little-vm-helper@908ab1ff8a596a03cd5221a1f8602dc44c3f906d # v0.0.12
@@ -449,6 +449,15 @@ jobs:
           name: pwru
           path: pwru.log
           retention-days: 5
+
+      - name: Cat pwru.log
+        if: ${{ !success() }}
+        uses: cilium/little-vm-helper@908ab1ff8a596a03cd5221a1f8602dc44c3f906d # v0.0.12
+        with:
+          provision: 'false'
+          cmd: |
+            cd /host/
+            cat pwru.log
 
       - name: Upload JUnits [junit]
         if: ${{ always() }}
