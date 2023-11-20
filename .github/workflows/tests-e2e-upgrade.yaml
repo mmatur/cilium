@@ -367,6 +367,20 @@ jobs:
             # --flush-ct interrupts the flows, so we need to set up again.
             ./cilium-cli connectivity test --include-conn-disrupt-test --conn-disrupt-test-setup
 
+      - name: Start pwru
+        uses: cilium/little-vm-helper@908ab1ff8a596a03cd5221a1f8602dc44c3f906d # v0.0.12
+        with:
+          provision: 'false'
+          cmd: |
+            cd /host
+
+            wget https://github.com/cilium/pwru/releases/download/v1.0.4/pwru-linux-amd64.tar.gz
+            tar xfv pwru-linux-amd64.tar.gz
+            mv pwru /usr/local/bin
+            SRC_IP=\$(kubectl get pod -l name=client -o=jsonpath='{.status.podIPs[1].ip}')
+            DEST_IP=\$(kubectl get pod -l name=echo-other-node -o=jsonpath='{.status.podIPs[1].ip}')
+            pwru --output-tuple --output-meta --filter-track-skb --output-file=/host/pwru.log host \$SRC_IP and host \$DEST_IP &
+
       - name: Downgrade Cilium ${{ env.cilium_stable_version }}
         uses: cilium/little-vm-helper@908ab1ff8a596a03cd5221a1f8602dc44c3f906d # v0.0.12
         with:
@@ -411,6 +425,7 @@ jobs:
         with:
           provision: 'false'
           cmd: |
+            cd /host
             kubectl -n kube-system get pods -l k8s-app=cilium --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}' | xargs -I'{}' /bin/sh -c "echo '{}' && kubectl -n kube-system exec  '{}' -c cilium-agent -- cilium metrics list | grep drop_count"
             kubectl get pods --all-namespaces -o wide
             ./cilium-cli status
@@ -425,6 +440,14 @@ jobs:
         with:
           name: cilium-sysdumps
           path: cilium-sysdump-*.zip
+          retention-days: 5
+
+      - name: Upload artifacts pwru
+        if: ${{ !success() }}
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        with:
+          name: pwru
+          path: pwru.log
           retention-days: 5
 
       - name: Upload JUnits [junit]
