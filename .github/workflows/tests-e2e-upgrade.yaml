@@ -377,8 +377,8 @@ jobs:
             wget https://github.com/cilium/pwru/releases/download/v1.0.4/pwru-linux-amd64.tar.gz
             tar xfv pwru-linux-amd64.tar.gz
             mv pwru /usr/local/bin
-            SRC_IP=\$(kubectl -n cilium-test get pod -l name=client -o=jsonpath='{.status.podIPs[1].ip}')
-            DEST_IP=\$(kubectl -n cilium-test get pod -l name=echo-other-node -o=jsonpath='{.status.podIPs[1].ip}')
+            SRC_IP=\$(kubectl -n cilium-test get pod -l name=client -o=jsonpath='{.items[0].status.podIPs[1].ip}')
+            DEST_IP=\$(kubectl -n cilium-test get pod -l name=echo-other-node -o=jsonpath='{.items[0].status.podIPs[1].ip}')
             pwru --output-tuple --output-meta --filter-track-skb --output-file=/host/pwru.log host \$SRC_IP and host \$DEST_IP &
 
       - name: Downgrade Cilium ${{ env.cilium_stable_version }}
