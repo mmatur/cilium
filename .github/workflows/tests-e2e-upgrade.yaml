@@ -224,7 +224,7 @@ jobs:
         id: cilium-newest-config
         uses: ./.github/actions/cilium-config
         with:
-          image-tag: '23ca7dd590593bd39941e162d9a66d6f8a945d87'
+          image-tag: 'cc620d7cc4a009804e903da72e37036a88d5dfd5'
           chart-dir: './install/kubernetes/cilium'
           tunnel: ${{ matrix.tunnel }}
           devices: ${{ matrix.devices }}
